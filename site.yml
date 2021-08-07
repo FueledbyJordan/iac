@@ -1,0 +1,12 @@
+---
+
+- hosts: all
+  roles:
+  - jordan-configs
+
+- hosts: machines
+  roles:
+
+- hosts: servers
+  roles:
+

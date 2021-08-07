@@ -1,0 +1,55 @@
+---
+
+- name: Install git
+  package:
+    name: git
+    state: present
+  become: yes
+
+- name: Make folder structure
+  file:
+    path: /home/djm/Documents/code/git
+    state: directory
+    owner: djm
+    mode: '0755'
+  become: yes
+
+- name: Clone dotfiles
+  git:
+    repo: https://github.com/FueledbyJordan/dotfiles.git
+    dest: /home/djm/Documents/code/git/dotfiles
+    force: yes
+  register: dotfiles_clone
+  become: yes
+
+- name: Change ownership of dotfiles folder recursively
+  file:
+    path: /home/djm/Documents/code/git/dotfiles
+    state: directory
+    owner: djm
+    recurse: yes
+  become: yes
+
+# Not ideal but fine
+- name: Change dotfiles folder permissions
+  command:
+    cmd: find . -type d -exec chmod 0755 {} \;
+    chdir: /home/djm/Documents/code/git/dotfiles
+  when: dotfiles_clone.changed
+  become: yes
+
+# Not ideal but fine
+- name: Change dotfiles file permissions
+  command:
+    cmd: find . -type f -exec chmod 0644 {} \;
+    chdir: /home/djm/Documents/code/git/dotfiles
+  when: dotfiles_clone.changed
+  become: yes
+
+# Not ideal but fine
+- name: Change dotfiles scripts permissions
+  command:
+    cmd: find . -type f -exec chmod 0755 {} \;
+    chdir: /home/djm/Documents/code/git/dotfiles/scripts
+  when: dotfiles_clone.changed
+  become: yes
