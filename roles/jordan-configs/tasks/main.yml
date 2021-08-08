@@ -8,25 +8,25 @@
 
 - name: Make folder structure
   file:
-    path: /home/djm/Documents/code/git
+    path: "/home/{{ username }}/Documents/code/git"
     state: directory
-    owner: djm
+    owner: "{{ username }}"
     mode: '0755'
   become: yes
 
 - name: Clone dotfiles
   git:
     repo: https://github.com/FueledbyJordan/dotfiles.git
-    dest: /home/djm/Documents/code/git/dotfiles
+    dest: "/home/{{ username }}/Documents/code/git/dotfiles"
     force: yes
   register: dotfiles_clone
   become: yes
 
 - name: Change ownership of dotfiles folder recursively
   file:
-    path: /home/djm/Documents/code/git/dotfiles
+    path: "/home/{{ username }}/Documents/code/git/dotfiles"
     state: directory
-    owner: djm
+    owner: "{{ username }}"
     recurse: yes
   become: yes
 
@@ -34,7 +34,7 @@
 - name: Change dotfiles folder permissions
   command:
     cmd: find . -type d -exec chmod 0755 {} \;
-    chdir: /home/djm/Documents/code/git/dotfiles
+    chdir: "/home/{{ username }}/Documents/code/git/dotfiles"
   when: dotfiles_clone.changed
   become: yes
 
@@ -42,7 +42,7 @@
 - name: Change dotfiles file permissions
   command:
     cmd: find . -type f -exec chmod 0644 {} \;
-    chdir: /home/djm/Documents/code/git/dotfiles
+    chdir: "/home/{{ username }}/Documents/code/git/dotfiles"
   when: dotfiles_clone.changed
   become: yes
 
@@ -50,6 +50,115 @@
 - name: Change dotfiles scripts permissions
   command:
     cmd: find . -type f -exec chmod 0755 {} \;
-    chdir: /home/djm/Documents/code/git/dotfiles/scripts
+    chdir: "/home/{{ username }}/Documents/code/git/dotfiles/scripts"
   when: dotfiles_clone.changed
+  become: yes
+
+- name: Link .vimrc
+  file:
+    src: "/home/{{ username }}/Documents/code/git/dotfiles/.vimrc"
+    dest: "/home/{{ username }}/.vimrc"
+    state: link
+    owner: "{{ username }}"
+  become: yes
+
+
+
+- block:
+
+  - name: Link .bashrc
+    file:
+      src: "/home/{{ username }}/Documents/code/git/dotfiles/.bashrc"
+      dest: "/home/{{ username }}/.bashrc"
+      state: link
+      owner: "{{ username }}"
+    become: yes
+
+  - name: Link .bash_profile
+    file:
+      src: "/home/{{ username }}/Documents/code/git/dotfiles/.bash_profile"
+      dest: "/home/{{ username }}/.bash_profile"
+      state: link
+      owner: "{{ username }}"
+    become: yes
+
+  when: not zsh_managed
+
+
+
+- block:
+
+  - name: Install zsh
+    package:
+      name: zsh
+      state: present
+    become: yes
+
+  - name: Link .zshrc
+    file:
+      src: "/home/{{ username }}/Documents/code/git/dotfiles/.zshrc"
+      dest: "/home/{{ username }}/.zshrc"
+      state: link
+      owner: "{{ username }}"
+    become: yes
+
+  - name: Link .zshenv
+    file:
+      src: "/home/{{ username }}/Documents/code/git/dotfiles/.zshenv"
+      dest: "/home/{{ username }}/.zshenv"
+      state: link
+      owner: "{{ username }}"
+    become: yes
+
+  - name: Check if oh my zsh installed for current user
+    stat:
+      path: "/home/{{ username }}/.oh-my-zsh"
+    register: oh_my_zsh
+    become: yes
+
+  - name: Curl oh my zsh installer
+    get_url:
+      url: https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+      dest: /opt/ohmyzsh_install.sh
+      owner: "{{ username }}"
+      mode: '0755'
+    when: not oh_my_zsh.stat.exists
+    become: yes
+
+  - name: Install oh my zsh
+    command:
+      cmd: ./ohmyzsh_install.sh --unattended
+      chdir: /opt
+    when: not oh_my_zsh.stat.exists
+    become: yes
+    become_user: "{{ username }}"
+
+    #    #git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+    #  - name: Clone powerlevel10k
+    #    git:
+    #      repo: https://github.com/romkatv/powerlevel10k.git
+    #      dest: "/home/{{ username }}/.oh-my-zsh/custom
+    #      force: yes
+    #    register: dotfiles_clone
+    #    become: yes
+
+
+  when: zsh_managed
+
+
+
+- name: Link .bash_aliases
+  file:
+    src: "/home/{{ username }}/Documents/code/git/dotfiles/.bash_aliases"
+    dest: "/home/{{ username }}/.bash_aliases"
+    state: link
+    owner: "{{ username }}"
+  become: yes
+
+- name: Link .config
+  file:
+    src: "/home/{{ username }}/Documents/code/git/dotfiles/.config"
+    dest: "/home/{{ username }}/.config"
+    state: link
+    owner: "{{ username }}"
   become: yes

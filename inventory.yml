@@ -2,15 +2,21 @@
 all:
   children:
     machines:
+      vars:
+        zsh_managed: True
+        username: djm
       hosts:
         192.168.1.104:
-    local:
-      vars:
-        ansible_connection: local
-      hosts:
-        localhost
+      children:
+      local:
+        vars:
+          ansible_connection: local
+        hosts:
+          localhost
     server:
       vars:
+        zsh_managed: False
+        username: jordan
         ansible_python_interpreter: /usr/bin/python3
       hosts:
         10.0.30.3:
